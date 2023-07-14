@@ -10,6 +10,7 @@ from interview.inventory.serializers import InventoryLanguageSerializer, Invento
 class InventoryListCreateView(APIView):
     queryset = Inventory.objects.all()
     serializer_class = InventorySerializer
+    limit = 3
     
     def post(self, request: Request, *args, **kwargs) -> Response:
         try:
@@ -27,7 +28,12 @@ class InventoryListCreateView(APIView):
         return Response(serializer.data, status=201)
     
     def get(self, request: Request, *args, **kwargs) -> Response:
-        serializer = self.serializer_class(self.get_queryset(), many=True)
+        offset = int(request.query_params.get('offset', 0))
+        starting_index = offset * self.limit
+        ending_index = starting_index + self.limit
+        paged_queryset = self.get_queryset()[starting_index:ending_index]
+        
+        serializer = self.serializer_class(paged_queryset, many=True)
         
         return Response(serializer.data, status=200)
     
